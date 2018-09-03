@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 
     NetDef initNet, predNet;
 
-    vector<TIndex> fake_size = {1, 64, 200, 80};
+    vector<TIndex> fake_size = {2, 64, 200, 80};
 
     // Simple init net for testing
     {
@@ -58,9 +58,11 @@ int main(int argc, char** argv) {
         val->set_name("values");
 
         int total_eles = prod(fake_size);
-        for (int i=0;i<total_eles; i++)
-            //val->add_floats(((float)i) / total_eles);
+        for (int i=0;i<total_eles/2; i++)
             val->add_floats(i % fake_size[1]); // Correct answer should be 0-#channels.
+
+        for (int i=0;i<total_eles/2; i++)
+            val->add_floats(i % (fake_size[1]/2)); // Correct answer should be 0-#channels/2.
     }
 
     // Our operator.
@@ -93,8 +95,11 @@ int main(int argc, char** argv) {
         float* ans_t = static_cast<float*>(ans_b->raw_mutable_data());
 
         std::cout << "Ans:\n";
-        for(int i=0; i<fake_size[1]; i++)
-            std::cout << " " << ans_t[i];
+        for (int bi=0; bi<fake_size[0]; bi++) {
+            for(int i=0; i<fake_size[1]; i++)
+                std::cout << " " << ans_t[bi*fake_size[1] + i];
+            std::cout << std::endl;
+        }
         std::cout << std::endl;
     }
 

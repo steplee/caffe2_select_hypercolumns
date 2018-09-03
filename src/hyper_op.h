@@ -79,29 +79,36 @@ namespace caffe2 {
             for(int i=1; i<InputSize(); i++) {
                 const auto& src = Input(i);
 
+                auto batchSrcOff = 0, batchOutOff = 0;
+
                 // we know it is float, but CopyItemsSameDevice needs bytes.
                 const uint8_t* rawSrc = static_cast<const uint8_t*>(src.raw_data());
 
                 const auto& dims = src.dims();
-                auto actC = dims[1], actH = dims[2], actW = dims[3];
+                auto batchSize = dims[0], actC = dims[1], actH = dims[2], actW = dims[3];
 
                 TIndex readY = (int)(actH * relY + .5f);
                 TIndex readX = (int)(actW * relX + .5f);
 
+                // Standard indexing into a 3D array. Batch is taken care of by batchSrcOff.
+                auto srcOff = (readY * actH * actC
+                            +  readX * actC) * sizeof(float);
+
                 std::cout << " From src " << i << " CHW " << actC << " " << actH << " " << actW << std::endl;
                 std::cout << "       Reading " << readY << " " << readX << std::endl;
 
-                // Standard indexing into a 3D array.
-                auto off =  (readX * actH * actC
-                         +   readY * actC) * sizeof(float);
+                for (int bi=0; bi<batchSize; bi++) {
+                    context_.CopyItemsSameDevice(
+                          src.meta(),
+                          actC * sizeof(float),
+                          rawSrc + srcOff + batchSrcOff,
+                          outRaw + outOff + batchOutOff);
 
-                context_.CopyItemsSameDevice(
-                      src.meta(),
-                      actC * sizeof(float),
-                      rawSrc + off,
-                      outRaw + outOff);
+                    batchSrcOff += actC * actH * actW * sizeof(float);
+                    batchOutOff += out_len; // skip to next row.
+                }
 
-                outOff += actC;
+                outOff += actC * sizeof(float); // advance to next columns.
             }
           }
 
