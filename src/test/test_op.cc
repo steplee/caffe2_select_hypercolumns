@@ -7,6 +7,7 @@
 #include <caffe2/core/types.h>
 #include <caffe2/core/init.h>
 #include <caffe2/core/tensor.h>
+#include <caffe2/core/graph.h>
 
 
 #include "hyper_op.h"
@@ -40,9 +41,12 @@ int main(int argc, char** argv) {
         op->add_output("pixel_location");
         auto val = op->add_arg(), shape = op->add_arg();
         shape->set_name("shape");
+        shape->add_ints(2);
         shape->add_ints(1);
         shape->add_ints(2);
         val->set_name("values");
+        val->add_floats(.5f);
+        val->add_floats(.5f);
         val->add_floats(.5f);
         val->add_floats(.5f);
 
@@ -67,18 +71,14 @@ int main(int argc, char** argv) {
 
     // Our operator.
     {
-        auto op = predNet.add_op();
-        op->set_type("Hyper");
-        op->add_input("pixel_location");
-        op->add_input("act0");
+        // Better API from core/graph.h
+        auto op = AddOp(&predNet, "Hyper", {"pixel_location", "act0"}, {"my_hyper_columns"});
 
         auto imgW = op->add_arg(), imgH = op->add_arg();
         imgW->set_name("img_w");
         imgH->set_name("img_h");
         imgW->set_i(100);
         imgH->set_i(100);
-
-        op->add_output("my_hyper_columns");
     }
 
     initNet.set_name("test_net_init");

@@ -8,9 +8,9 @@ Stack all features/activations from a single cell of specified blobs, where the 
 
 ## Notes
   - Caffe2 lazy allocates tensors, you should set up the wanted size then call `raw_mutable_data` or `mutable_data` to create a new one.
-  - I'm still a little unclear of tensors vs blobs. Maybe blob is used just for registering with the workspace?
   - The C++ workflow for creating new ops is exactly like in Tensorflow.
   - The documentation is pretty lacking, but the source code is easier to navigate then other frameworks.
+  - You seem to not be able to compile your op to a shared library, otherwise it doesn't end up getting registered. Instead create an archive for the op and link with `-Wl,--whole-archive lib -Wl,--no-whole-archive` for any executables that need it. I stumbled accross this in `caffe2/core/operator.h` and it doesn't seem to be documented anywhere else.
 
 ### References
  1. https://caffe2.ai/docs/custom-operators.html

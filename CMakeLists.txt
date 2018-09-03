@@ -40,7 +40,7 @@ message(STATUS "cuRAND lib: ${CUDA_curand_LIBRARY}")
 message(STATUS "Boost incl: ${Boost_INCLUDE_DIR}")
 
 # Main library for use with SLAM
-add_library(hyper_op SHARED
+add_library(hyper_op 
   src/hyper_op.cc
 )
 
@@ -59,6 +59,7 @@ target_include_directories(hyper_op
     ${OpenCV_INCLUDE_DIRS})
 
 target_link_libraries(hyper_op
+    INTERFACE
   ${Boost_LIBRARIES}
     ${GFLAGS_LIB}
     ${NCCL_LIB}
@@ -71,25 +72,15 @@ target_link_libraries(hyper_op
     ${CAFFE2_GPU_LIB}
     ${OpenCV_LIBRARIES})
 
+
 # A little test app
 add_executable(test_op
     src/test/test_op.cc
-    src/hyper_op.cc
+    #src/hyper_op.cc
 )
 
 target_link_libraries(test_op
-  ${Boost_LIBRARIES}
-    ${GFLAGS_LIB}
-    ${NCCL_LIB}
-    ${CUDA_LIBRARIES}
-    ${CUDA_curand_LIBRARY}
-    ${PROTOBUF_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${GLOG_LIB}
-    ${CAFFE2_LIB}
-    ${CAFFE2_GPU_LIB}
-    ${OpenCV_LIBRARIES}
-    hyper_op)
+    -Wl,--whole-archive hyper_op -Wl,--no-whole-archive)
 
 target_include_directories(test_op
     PUBLIC
