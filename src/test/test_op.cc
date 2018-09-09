@@ -12,6 +12,9 @@
 
 #include "hyper_op.h"
 
+
+#include <catch.hpp>
+
 using namespace std;
 using namespace caffe2;
 
@@ -22,11 +25,13 @@ T prod(vector<T>& v) {
     return acc;
 }
 
+/*
 int main(int argc, char** argv) {
-
     GlobalInit(&argc, &argv);
+    */
 
 
+TEST_CASE("Works and stuff", "[basic]") {
     Workspace wrk;
     CPUContext *cctx = new CPUContext();
 
@@ -96,16 +101,25 @@ int main(int argc, char** argv) {
 
         std::cout << "Ans:\n";
         for (int bi=0; bi<fake_size[0]; bi++) {
-            for(int i=0; i<fake_size[1]; i++)
+            for(int i=0; i<fake_size[1]; i++) {
                 std::cout << " " << ans_t[bi*fake_size[1] + i];
+                if (i > 0)
+                  REQUIRE(( ans_t[bi*fake_size[1]+i] == ans_t[bi*fake_size[1]+i-1] + 1 or
+                           ans_t[bi*fake_size[1]+i] == 0 ));
+                else
+                  REQUIRE( ans_t[bi*fake_size[1]+i] == 0 ); // index0 should always be 0.
+            }
             std::cout << std::endl;
         }
         std::cout << std::endl;
     }
 
+}
 
 
+/*
     std::cout << " -- Tests completed. " << std::endl;
 
     return 0;
 }
+*/

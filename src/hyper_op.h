@@ -1,3 +1,4 @@
+#pragma once
 
 #include <cmath>
 #include <map>
@@ -33,7 +34,7 @@ namespace caffe2 {
 
           // Main op code.
           bool RunOnDevice() override {
-            assert(InputSize() >= 2);
+            assert(InputSize() >= 2); // At least pixelLocations & 1 other "source" tensor.
 
             // Input(i) returns a const reference to a TensorCPU/CUDA (actually the template type of the op), Output(i) returns a pointer to it.
             // Inputs() returns a const vector to const blob pointers.
@@ -69,7 +70,7 @@ namespace caffe2 {
             output->Resize(outShape);
 
             // Don't forget! Caffe2 lazy-allocates tensors, so you should call Resize, followed by either
-            // raw_mutable_data or mutable_data. 
+            // raw_mutable_data or mutable_data.
             auto* outRaw = output->raw_mutable_data(src_meta);
             auto outOff = 0;
 
@@ -114,6 +115,7 @@ namespace caffe2 {
                     // outOff has fully advanced to next batch item by accumulating in the numLocations loop.
                 }
             }
+            return true;
           }
 
 

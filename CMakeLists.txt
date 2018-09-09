@@ -21,68 +21,82 @@ add_definitions(-lpthread -g)
 # If built from pytorch git
 find_library(CAFFE2_LIB caffe2 REQUIRED)
 find_library(CAFFE2_GPU_LIB caffe2_gpu REQUIRED)
-find_library(GLOG_LIB NAMES glog HINTS /usr/local/lib /usr/lib/x86_64-linux-gnu)
-find_library(GFLAGS_LIB gflags)
+#find_library(GLOG_LIB NAMES glog HINTS /usr/local/lib /usr/lib/x86_64-linux-gnu)
 find_library(NCCL_LIB nccl)
+
+find_library(GFLAGS_LIB gflags)
+#find_package(gflags REQUIRED)
+#set (GFLAGS_LIB /usr/lib/x86_64-linux-gnu/libgflags.so.2)
 
 find_package(CUDA REQUIRED)
 
 find_package(Boost REQUIRED serialization)
 
+find_package(Catch2 REQUIRED)
+
 message(STATUS "Caffe2 lib: ${CAFFE2_LIB}")
 message(STATUS "Caffe2 gpu lib: ${CAFFE2_GPU_LIB}")
 message(STATUS "Caffe2 incl: ${CAFFE2_INCLUDE_DIRS}")
-message(STATUS "GLOG lib: ${GLOG_LIB} glog::glog")
+#message(STATUS "GLOG lib: ${GLOG_LIB} glog::glog")
 message(STATUS "OpenCV lib: ${OpenCV_LIBRARIES}")
 message(STATUS "CUDA lib: ${CUDA_LIBRARIES}")
 message(STATUS "CUDA incl: ${CUDA_INCLUDE_DIRS}")
 message(STATUS "cuRAND lib: ${CUDA_curand_LIBRARY}")
 message(STATUS "Boost incl: ${Boost_INCLUDE_DIR}")
+message(STATUS "GFlags: ${GFLAGS_LIB}")
+message(STATUS "Proto: ${PROTOBUF_LIBRARY}")
 
 # Main library for use with SLAM
-add_library(hyper_op 
+add_library(hyper_op SHARED
   src/hyper_op.cc
 )
 
 
 
-# There's PUBLIC INTERFACE and PRIVATE
-target_include_directories(hyper_op
-    PUBLIC
-    ${MY_CAFFE2_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIR}
-    ${CUDA_INCLUDE_DIRS}
-    ${Eigen_INCLUDE_DIRS}
-    ${CAFFE2_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/
-    ${OpenCV_INCLUDE_DIRS})
+foreach (lib hyper_op)
+    target_include_directories(${lib}
+      PUBLIC
+      ${MY_CAFFE2_INCLUDE_DIRS}
+      ${Boost_INCLUDE_DIR}
+      ${CUDA_INCLUDE_DIRS}
+      ${Eigen_INCLUDE_DIRS}
+      ${CAFFE2_INCLUDE_DIRS}
+      ${CMAKE_CURRENT_SOURCE_DIR}/include
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/
+      ${OpenCV_INCLUDE_DIRS})
 
-target_link_libraries(hyper_op
-    INTERFACE
-  ${Boost_LIBRARIES}
-    ${GFLAGS_LIB}
-    ${NCCL_LIB}
-    ${CUDA_LIBRARIES}
-    ${CUDA_curand_LIBRARY}
-    ${PROTOBUF_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${GLOG_LIB}
-    ${CAFFE2_LIB}
-    ${CAFFE2_GPU_LIB}
-    ${OpenCV_LIBRARIES})
+  target_link_libraries(${lib}
+    PUBLIC
+      ${CAFFE2_LIB}
+      ${CAFFE2_GPU_LIB}
+      INTERFACE
+    ${Boost_LIBRARIES}
+      ${NCCL_LIB}
+      ${CUDA_LIBRARIES}
+      ${CUDA_curand_LIBRARY}
+      ${CMAKE_THREAD_LIBS_INIT}
+      ${GFLAGS_LIB}
+      #${GLOG_LIB}
+      ${PROTOBUF_LIBRARY}
+      ${OpenCV_LIBRARIES})
+endforeach(lib)
 
 
 # A little test app
-add_executable(test_op
+add_executable(tests
+    src/hyper_op.cc
+    src/test/test_main.cc
     src/test/test_op.cc
     #src/hyper_op.cc
 )
 
-target_link_libraries(test_op
-    -Wl,--whole-archive hyper_op -Wl,--no-whole-archive)
+target_link_libraries(tests
+  #-Wl,--whole-archive hyper_op -Wl,--no-whole-archive
+  hyper_op
+  Catch2::Catch2
+  )
 
-target_include_directories(test_op
+target_include_directories(tests
     PUBLIC
     ${MY_CAFFE2_INCLUDE_DIRS}
     ${CUDA_INCLUDE_DIRS}
